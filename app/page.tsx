@@ -1,103 +1,91 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Shield, Lock, ScanText, Search, ScrollText, GitBranch } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollToModulesButton } from "@/components/marketing/scroll-to-modules-button";
 
-export default function Home() {
+const MODULES = [
+  {
+    icon: Lock,
+    code: "A",
+    title: "Authentification & RBAC",
+    text: "Connexion 2FA TOTP, rôles Lecteur à Super Admin, héritage dossier et overrides document.",
+  },
+  {
+    icon: ScanText,
+    code: "B",
+    title: "Acquisition & OCR",
+    text: "Dépôt PDF / Word / PNG / JPEG, hash SHA-256, stockage MinIO, OCR et édition Word dans l’app.",
+  },
+  {
+    icon: Search,
+    code: "C",
+    title: "Recherche plein texte",
+    text: "Palette Cmd+K, to_tsquery PostgreSQL, extraits surlignés et filtres multicritères.",
+  },
+  {
+    icon: ScrollText,
+    code: "D",
+    title: "Audit & filigrane",
+    text: "Journal immuable (VIEW, DOWNLOAD, UPDATE…) et visionneuse avec filigrane email / date / IP.",
+  },
+  {
+    icon: GitBranch,
+    code: "E",
+    title: "Versions & validation",
+    text: "Historique v1.0 → v1.1, restauration admin et circuit Soumission / Validé / Rejeté.",
+  },
+];
+
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#e4efe8,_#f7f6f3_45%)]">
+      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+        <div className="flex items-center gap-2">
+          <Shield className="h-6 w-6 text-primary" />
+          <span className="font-semibold">DocuShield AI</span>
         </div>
+        <Button asChild>
+          <Link href="/login">Se connecter</Link>
+        </Button>
+      </header>
+      <main className="mx-auto max-w-6xl px-6 py-16">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">GED intelligente & souveraine</p>
+        <h1 className="font-serif mt-3 max-w-3xl text-4xl leading-tight md:text-6xl">
+          Vos documents, protégés, indexés, tracés.
+        </h1>
+        <p className="mt-5 max-w-2xl text-lg text-muted-foreground">
+          Authentification 2FA, OCR Tesseract, recherche PostgreSQL, journal d&apos;audit immuable et circuit de
+          validation. Déploiement SaaS multi-tenant ou on-premise.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button asChild size="lg">
+            <Link href="/login">Accéder à l&apos;espace</Link>
+          </Button>
+          <ScrollToModulesButton />
+        </div>
+        <section id="modules" aria-labelledby="modules-heading" className="mt-24 scroll-mt-8">
+          <h2 id="modules-heading" className="text-2xl font-semibold">
+            Modules
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Les cinq piliers de la plateforme, de l&apos;accès à la validation.
+          </p>
+          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {MODULES.map((item) => (
+              <article key={item.code} className="rounded-2xl border bg-card p-6 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <item.icon className="h-6 w-6 text-primary" aria-hidden />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                    Module {item.code}
+                  </span>
+                </div>
+                <h3 className="mt-3 text-lg font-semibold">{item.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{item.text}</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
 }

@@ -1,0 +1,287 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  LECTEUR
+  EDITEUR
+  VALIDATEUR
+  ADMIN_ESPACE
+  SUPER_ADMIN
+}
+
+enum DocStatus {
+  BROUILLON
+  EN_REVISION
+  VALIDE
+  REJETE
+  ARCHIVE
+}
+
+enum Sensitivity {
+  PUBLIC
+  INTERNE
+  CONFIDENTIEL
+  SECRET
+}
+
+enum OcrJobStatus {
+  PENDING
+  RUNNING
+  DONE
+  FAILED
+}
+
+enum ValidationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Tenant {
+  id            String       @id @default(uuid())
+  name          String
+  slug          String       @unique
+  storagePrefix String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  users         User[]
+  departments   Department[]
+  folders       Folder[]
+  documents     Document[]
+  auditLogs     AuditLog[]
+  tags          Tag[]
+}
+
+model User {
+  id                   String               @id @default(uuid())
+  email                String               @unique
+  passwordHash         String
+  fullName             String
+  role                 Role                 @default(LECTEUR)
+  is2FAEnabled         Boolean              @default(false)
+  twoFactorSecret      String?
+  departmentId         String?
+  department           Department?          @relation(fields: [departmentId], references: [id])
+  tenantId             String
+  tenant               Tenant               @relation(fields: [tenantId], references: [id])
+  documents            Document[]           @relation("Owner")
+  auditLogs            AuditLog[]
+  createdDocuments     DocumentVersion[]
+  twoFactorChallenges  TwoFactorChallenge[]
+  assignedValidations  ValidationRequest[]  @relation("Assignee")
+  requestedValidations ValidationRequest[]  @relation("Requester")
+  notifications        Notification[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  @@index([tenantId])
+  @@index([role])
+}
+
+model TwoFactorChallenge {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Department {
+  id        String     @id @default(uuid())
+  name      String
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  users     User[]
+  documents Document[]
+  folders   Folder[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@unique([tenantId, name])
+}
+
+model Folder {
+  id           String             @id @default(uuid())
+  name         String
+  parentId     String?
+  parent       Folder?            @relation("FolderTree", fields: [parentId], references: [id])
+  children     Folder[]           @relation("FolderTree")
+  tenantId     String
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  departmentId String?
+  department   Department?        @relation(fields: [departmentId], references: [id])
+  minViewRole  Role               @default(LECTEUR)
+  documents    Document[]
+  permissions  FolderPermission[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([tenantId])
+  @@index([parentId])
+  @@index([departmentId])
+}
+
+model FolderPermission {
+  id          String  @id @default(uuid())
+  folderId    String
+  folder      Folder  @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  role        Role
+  canView     Boolean @default(true)
+  canEdit     Boolean @default(false)
+  canValidate Boolean @default(false)
+  canDelete   Boolean @default(false)
+
+  @@unique([folderId, role])
+}
+
+model DocumentPermission {
+  id          String   @id @default(uuid())
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  role        Role
+  canView     Boolean  @default(true)
+  canEdit     Boolean  @default(false)
+  canValidate Boolean  @default(false)
+  canDelete   Boolean  @default(false)
+
+  @@unique([documentId, role])
+}
+
+model Document {
+  id            String                @id @default(uuid())
+  title         String
+  fileUrl       String
+  fileHash      String
+  mimeType      String
+  fileSize      Int
+  status        DocStatus             @default(BROUILLON)
+  sensitivity   Sensitivity           @default(INTERNE)
+  extractedText String?               @db.Text
+  contentVector Unsupported("tsvector")?
+  detectedDate  DateTime?
+  ownerId       String
+  owner         User                  @relation("Owner", fields: [ownerId], references: [id])
+  departmentId  String
+  department    Department            @relation(fields: [departmentId], references: [id])
+  folderId      String
+  folder        Folder                @relation(fields: [folderId], references: [id])
+  tenantId      String
+  tenant        Tenant                @relation(fields: [tenantId], references: [id])
+  versions      DocumentVersion[]
+  auditLogs     AuditLog[]
+  tags          Tag[]                 @relation("DocumentTags")
+  permissions   DocumentPermission[]
+  ocrJobs       OcrJob[]
+  validations   ValidationRequest[]
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+
+  @@index([tenantId])
+  @@index([folderId])
+  @@index([status])
+  @@index([sensitivity])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@index([ownerId])
+}
+
+model DocumentVersion {
+  id          String   @id @default(uuid())
+  version     String
+  fileUrl     String
+  fileHash    String
+  fileSize    Int
+  mimeType    String
+  documentId  String
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([documentId])
+}
+
+model AuditLog {
+  id         String    @id @default(uuid())
+  action     String
+  ipAddress  String
+  userAgent  String
+  userEmail  String
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  createdAt  DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([userId])
+  @@index([documentId])
+  @@index([createdAt])
+  @@index([action])
+}
+
+model Tag {
+  id        String     @id @default(uuid())
+  name      String
+  tenantId  String
+  tenant    Tenant     @relation(fields: [tenantId], references: [id])
+  documents Document[] @relation("DocumentTags")
+
+  @@unique([tenantId, name])
+}
+
+model OcrJob {
+  id         String       @id @default(uuid())
+  documentId String
+  document   Document     @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  status     OcrJobStatus @default(PENDING)
+  error      String?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([status])
+  @@index([documentId])
+}
+
+model ValidationRequest {
+  id          String           @id @default(uuid())
+  documentId  String
+  document    Document         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  requesterId String
+  requester   User             @relation("Requester", fields: [requesterId], references: [id])
+  assigneeId  String
+  assignee    User             @relation("Assignee", fields: [assigneeId], references: [id])
+  status      ValidationStatus @default(PENDING)
+  comment     String?          @db.Text
+  decidedAt   DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([documentId])
+  @@index([assigneeId])
+  @@index([status])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  href      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
