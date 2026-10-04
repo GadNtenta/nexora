@@ -11,7 +11,6 @@ import { copyObject, getObjectBuffer, objectKey } from "@/lib/storage/minio";
 import { notifyUser } from "@/lib/notify";
 import { nextVersion } from "@/lib/documents/version";
 import { scheduleOcr } from "@/lib/ocr/schedule";
-import { convertPdfToDocx } from "@/lib/documents/pdf-to-docx";
 import { commitNewFileVersion } from "@/lib/documents/commit-version";
 import { DOCX_MIME, isPdfMime } from "@/lib/documents/mime";
 import { suggestTags } from "@/lib/ocr/metadata";
@@ -82,6 +81,7 @@ export async function convertPdfToWordAction(documentId: string) {
   }
 
   const pdf = await getObjectBuffer(document.fileUrl);
+  const { convertPdfToDocx } = await import("@/lib/documents/pdf-to-docx");
   const converted = await convertPdfToDocx(pdf, {
     title: document.title,
     fallbackText: document.extractedText,

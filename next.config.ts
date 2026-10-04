@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     "mammoth",
     "html-to-docx",
     "word-extractor",
-    "sanitize-html",
     "unpdf",
     "@napi-rs/canvas",
   ],

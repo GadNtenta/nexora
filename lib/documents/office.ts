@@ -1,38 +1,8 @@
 import mammoth from "mammoth";
-import sanitizeHtml from "sanitize-html";
 import htmlToDocx from "html-to-docx";
 import WordExtractor from "word-extractor";
 import { DOCX_MIME, isLegacyWordMime } from "@/lib/documents/mime";
-
-const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
-  allowedTags: [
-    ...sanitizeHtml.defaults.allowedTags,
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "img",
-    "span",
-    "u",
-    "s",
-    "table",
-    "thead",
-    "tbody",
-    "tr",
-    "th",
-    "td",
-    "colgroup",
-    "col",
-  ],
-  allowedAttributes: {
-    a: ["href", "name", "target", "rel"],
-    img: ["src", "alt", "width", "height"],
-    td: ["colspan", "rowspan"],
-    th: ["colspan", "rowspan"],
-    "*": ["style", "class"],
-  },
-  allowedSchemes: ["http", "https", "data", "mailto"],
-};
+import { htmlToPlainText, sanitizeOfficeHtml } from "@/lib/html/sanitize";
 
 function escapeHtml(value: string): string {
   return value
@@ -61,16 +31,7 @@ async function toBuffer(value: ArrayBuffer | Blob | Buffer): Promise<Buffer> {
   throw new Error("Conversion Word : format de fichier inattendu");
 }
 
-export function sanitizeOfficeHtml(html: string): string {
-  return sanitizeHtml(html, SANITIZE_OPTIONS);
-}
-
-export function htmlToPlainText(html: string): string {
-  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} })
-    .replace(/&nbsp;/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+export { htmlToPlainText, sanitizeOfficeHtml };
 
 export function textToOfficeHtml(text: string): string {
   return sanitizeOfficeHtml(paragraphsFromText(text));
