@@ -56,9 +56,14 @@ Mot de passe commun : `Password123!`
 | Admin espace | admin@acme.local |
 | Super admin | super@acme.local |
 
-Code 2FA de démo (hors production) : `123456`
+Code 2FA de démo : `123456` (désactiver avec `DEMO_2FA_PIN=off`).
 
 Vous pouvez aussi scanner le QR avec Google Authenticator ou Authy.
+
+## Déploiement Vercel
+
+Ne définis **pas** `NODE_ENV` dans le dashboard (Vercel le force déjà à `production`).  
+Renseigne `APP_URL` avec l’URL du déploiement et garde `DEMO_2FA_PIN=123456` pour la démo.
 
 ## Modules
 

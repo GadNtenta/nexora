@@ -7,7 +7,7 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth/password";
 import { encryptSecret, decryptSecret } from "@/lib/auth/crypto";
-import { generateTotpSecret, totpKeyUri, verifyTotp, isDemoTwoFactorPin, DEMO_2FA_PIN } from "@/lib/auth/totp";
+import { generateTotpSecret, totpKeyUri, verifyTotp, isDemoTwoFactorPin, demoTwoFactorPin } from "@/lib/auth/totp";
 import { getRequestMeta } from "@/lib/audit/log";
 import {
   clearSessionCookie,
@@ -75,7 +75,7 @@ export async function getTwoFactorSetup() {
     include: { user: true },
   });
   if (!challenge || challenge.expiresAt < new Date()) return null;
-  const demoPin = process.env.NODE_ENV === "production" ? null : DEMO_2FA_PIN;
+  const demoPin = demoTwoFactorPin();
   if (challenge.user.is2FAEnabled || !challenge.user.twoFactorSecret) {
     return { setup: false as const, email: challenge.user.email, demoPin };
   }
