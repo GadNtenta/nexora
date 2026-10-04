@@ -32,7 +32,16 @@ export async function loginAction(_prev: AuthState, formData: FormData): Promise
   });
   if (!parsed.success) return { error: "Identifiants invalides." };
 
-  const user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } });
+  let user;
+  try {
+    user = await prisma.user.findUnique({ where: { email: parsed.data.email.toLowerCase() } });
+  } catch (error) {
+    console.error("login db error", error);
+    return {
+      error:
+        "Base de données injoignable. Ouvre le dashboard Supabase, restaure le projet s’il est en pause, puis copie l’URI pooler (Connect) dans DATABASE_URL / DIRECT_URL.",
+    };
+  }
   if (!user) return { error: "Identifiants invalides." };
 
   const valid = await verifyPassword(parsed.data.password, user.passwordHash);
